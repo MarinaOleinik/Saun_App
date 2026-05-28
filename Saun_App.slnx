@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Saun_App/Saun_App.csproj">
+    <Deploy />
+  </Project>
+</Solution>

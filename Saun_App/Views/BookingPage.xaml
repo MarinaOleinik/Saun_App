@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Saun_App.ViewModels"
+             x:Class="Saun_App.Views.BookingPage"
+             Title="BookingPage"
+             BackgroundColor="White">
+    <ContentPage.BindingContext>
+        <vm:BookingViewModel />
+    </ContentPage.BindingContext>
+
+    <ScrollView Padding="20">
+        <VerticalStackLayout Spacing="15">
+
+            <Label Text="Maja broneerimine pilves" FontSize="22" FontAttributes="Bold" TextColor="Black"/>
+
+            <Label Text="Kliendi nimi:" FontSize="14" />
+            <Entry Text="{Binding CustomerName}" Placeholder="Sisesta oma nimi..." />
+
+            <Label Text="Saabumine:" FontSize="14" />
+            <DatePicker Date="{Binding StartDate}" />
+
+            <Label Text="Lahkumine:" FontSize="14" />
+            <DatePicker Date="{Binding EndDate}" />
+
+            <Button Text="Broneeri reaalajas" 
+                    Command="{Binding ConfirmBookingCommand}" 
+                    HeightRequest="48" 
+                    BackgroundColor="Green" TextColor="White" />
+
+            <Label Text="{Binding StatusMessage}" 
+                   FontSize="14" 
+                   FontAttributes="Bold" 
+                   HorizontalOptions="Center" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
