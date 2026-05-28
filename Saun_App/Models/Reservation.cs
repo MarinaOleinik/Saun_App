@@ -11,7 +11,7 @@ namespace Saun_App.Models
         public long Id { get; set; }
 
         [Column("house_id")] // See rida ütleb Supabase'ile, et C# "HouseId" on baasis "house_id"
-        public string HouseId { get; set; }
+        public long HouseId { get; set; }
 
         [Column("customer_name")]
         public string CustomerName { get; set; }

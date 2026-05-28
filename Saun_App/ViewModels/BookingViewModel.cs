@@ -15,7 +15,7 @@ namespace Saun_App.ViewModels
         public ObservableCollection<House> Houses { get; set; } = new ObservableCollection<House>();
 
         // UUS: Nimekiri kliendi aktiivsetest broneeringutest
-        public ObservableCollection<Reservation> MyReservations { get; set; } = new ObservableCollection<Reservation>();
+        public ObservableCollection<ReservationDisplayItem> MyReservations { get; set; } = new ObservableCollection<ReservationDisplayItem>();
 
         private House _selectedHouse;
         public House SelectedHouse
@@ -111,14 +111,47 @@ namespace Saun_App.ViewModels
             {
                 var resList = await _supabaseService.GetClientReservationsAsync(CustomerName);
                 MyReservations.Clear();
+
                 foreach (var res in resList)
                 {
-                    MyReservations.Add(res);
+                    // Otsime kohalikust Houses listist maja, mille numbriline ID ühtib broneeringuga
+                    var matchingHouse = Houses.FirstOrDefault(h => h.Id == res.HouseId);
+                    string houseName = matchingHouse != null ? matchingHouse.Name : $"Maja #{res.HouseId}";
+
+                    MyReservations.Add(new ReservationDisplayItem
+                    {
+                        Reservation = res,
+                        HouseName = houseName
+                    });
                 }
             }
             catch (Exception ex)
             {
                 StatusMessage = $"⚠️ Ei saanud broneeringuid laadida: {ex.Message}";
+            }
+        }
+
+        // Tühistamise käsk, mis võtab parameetriks uue display objekti
+        [RelayCommand]
+        private async Task CancelReservation(ReservationDisplayItem displayItem)
+        {
+            if (displayItem == null || displayItem.Reservation == null) return;
+
+            StatusMessage = "⏳ Tühistatakse broneeringut...";
+
+            try
+            {
+                bool success = await _supabaseService.DeleteReservationAsync(displayItem.Reservation.Id);
+
+                if (success)
+                {
+                    StatusMessage = "🗑️ Broneering edukalt tühistatud!";
+                    await RefreshMyReservationsAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"⚠️ Tühistamine ebaõnnestus: {ex.Message}";
             }
         }
 
@@ -151,30 +184,13 @@ namespace Saun_App.ViewModels
             catch (Exception ex) { StatusMessage = $"⚠️ Süsteemi viga: {ex.Message}"; }
         }
 
-        // UUS KÄSK: Broneeringu tühistamine (kustutamine)
-        [RelayCommand]
-        private async Task CancelReservation(Reservation reservation)
-        {
-            if (reservation == null) return;
 
-            StatusMessage = "⏳ Tühistatakse broneeringut...";
-
-            try
-            {
-                // Kutsume esile DELETE päringu baasi vastu (kasutame tabeli 'id' veergu, mis on piltidelt näha, et on int8/long)
-                bool success = await _supabaseService.DeleteReservationAsync(reservation.Id);
-
-                if (success)
-                {
-                    StatusMessage = "🗑️ Broneering edukalt tühistatud!";
-                    // Värskendame ekraani
-                    await RefreshMyReservationsAsync();
-                }
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = $"⚠️ Tühistamine ebaõnnestus: {ex.Message}";
-            }
-        }
+        
+        
     }
+    public class ReservationDisplayItem
+        {
+            public Reservation Reservation { get; set; }
+            public string HouseName { get; set; }
+        }
 }

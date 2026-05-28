@@ -10,7 +10,7 @@ namespace Saun_App.Models
     public class House : BaseModel
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; }
+        public long Id { get; set; }
 
         [Column("name")]
         public string Name { get; set; }

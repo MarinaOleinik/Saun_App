@@ -18,15 +18,14 @@ namespace Saun_App.Services
         }
 
         // REAALAJAS KONTROLL JA BRONEERIMINE
-        public async Task<bool> BookHouseAsync(string houseId, string customerName, DateTime start, DateTime end)
+        public async Task<bool> BookHouseAsync(long houseId, string customerName, DateTime start, DateTime end)
         {
             try
             {
-                // 1. LAHENDUS: Kasutame .Filter() meetodit. 
-                // Esimeseks parameetriks on andmebaasi veeru nimi, teiseks võrdlus (eq = equal ehk võrdne) ja kolmandaks väärtus.
+                // PARANDUS: Lisasime houseId taha .ToString(), et vältida tüübiviga C# teegis
                 var response = await _supabaseClient
                     .From<Reservation>()
-                    .Filter("house_id", Postgrest.Constants.Operator.Equals, houseId)
+                    .Filter("house_id", Postgrest.Constants.Operator.Equals, houseId.ToString())
                     .Get();
 
                 // Kui andmebaasi tabel on täiesti tühi, saame kohe broneerida
@@ -35,23 +34,22 @@ namespace Saun_App.Services
                     return await InsertReservation(houseId, customerName, start, end);
                 }
 
-                // 2. Võtame sisendist puhtalt kuupäeva (ilma jooksvate tundide/sekunditeta)
+                // 2. Võtame sisendist puhtalt kuupäeva
                 DateTime startOnly = start.Date;
                 DateTime endOnly = end.Date;
 
-                // 3. Kontrollime kuupäevade kattuvust reaalsete andmetega
+                // 3. Kontrollime kuupäevade kattuvust
                 bool isOverlapping = response.Models.Any(r =>
                 {
                     DateTime dbStart = r.StartDate.Date;
                     DateTime dbEnd = r.EndDate.Date;
 
-                    // Kontroll: kas soovitud vahemik kattub mõne olemasoleva broneeringuga
                     return startOnly < dbEnd && endOnly > dbStart;
                 });
 
                 if (isOverlapping)
                 {
-                    return false; // Kuupäevad kattuvad, maja on juba võetud!
+                    return false; // Kuupäevad kattuvad!
                 }
 
                 // 4. Kui kuupäevad on vabad, salvestame
@@ -59,17 +57,16 @@ namespace Saun_App.Services
             }
             catch (Exception ex)
             {
-                // Edastame päris veateate, et õpilased näeksid, kui andmebaasis on mingi tõrge
                 throw new Exception($"Supabase andmebaasi viga: {ex.Message}");
             }
         }
 
-        private async Task<bool> InsertReservation(string houseId, string customerName, DateTime start, DateTime end)
+        // Muuda ka siin string houseId -> long houseId
+        private async Task<bool> InsertReservation(long houseId, string customerName, DateTime start, DateTime end)
         {
-            // Salvestame andmebaasi puhtad kuupäevad, kus kellaaeg on nullitud (00:00:00)
             var newReservation = new Reservation
             {
-                HouseId = houseId,
+                HouseId = houseId, // See on nüüd korrektselt long number
                 CustomerName = customerName,
                 StartDate = start.Date,
                 EndDate = end.Date
@@ -78,6 +75,8 @@ namespace Saun_App.Services
             await _supabaseClient.From<Reservation>().Insert(newReservation);
             return true;
         }
+
+       
 
         //------------------------2. osa - MAJADE NÄITAMINE------------------------
         public async Task<List<House>> GetHousesAsync()
@@ -116,12 +115,9 @@ namespace Saun_App.Services
         {
             try
             {
-                // Loome Reservation objekti, millel määrame ainult kustutatava ID
-                var filterModel = new Reservation { Id = reservationId };
-
                 await _supabaseClient
                     .From<Reservation>()
-                    .Match(filterModel) // Nüüd on tüüp täpselt see, mida Supabase ootab!
+                    .Filter("id", Postgrest.Constants.Operator.Equals, reservationId.ToString())
                     .Delete();
 
                 return true;
