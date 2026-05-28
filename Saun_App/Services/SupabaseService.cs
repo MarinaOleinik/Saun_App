@@ -78,5 +78,60 @@ namespace Saun_App.Services
             await _supabaseClient.From<Reservation>().Insert(newReservation);
             return true;
         }
+
+        //------------------------2. osa - MAJADE NÄITAMINE------------------------
+        public async Task<List<House>> GetHousesAsync()
+        {
+            try
+            {
+                var response = await _supabaseClient.From<House>().Get();
+                return response.Models ?? new List<House>();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Majade laadimise viga: {ex.Message}");
+            }
+        }
+
+        // 1. Laeb andmebaasist konkreetse kliendi broneeringud
+        public async Task<List<Reservation>> GetClientReservationsAsync(string customerName)
+        {
+            try
+            {
+                var response = await _supabaseClient
+                    .From<Reservation>()
+                    .Filter("customer_name", Postgrest.Constants.Operator.Equals, customerName)
+                    .Get();
+
+                return response.Models ?? new List<Reservation>();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Broneeringute laadimise viga: {ex.Message}");
+            }
+        }
+
+        // 2. Kustutab broneeringu andmebaasist ID järgi (DELETE)
+        public async Task<bool> DeleteReservationAsync(long reservationId)
+        {
+            try
+            {
+                // Loome Reservation objekti, millel määrame ainult kustutatava ID
+                var filterModel = new Reservation { Id = reservationId };
+
+                await _supabaseClient
+                    .From<Reservation>()
+                    .Match(filterModel) // Nüüd on tüüp täpselt see, mida Supabase ootab!
+                    .Delete();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Tühistamise viga: {ex.Message}");
+            }
+        }
+
+
     }
 }

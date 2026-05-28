@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Saun_App.ViewModels"
+             xmlns:models="clr-namespace:Saun_App.Models"
              x:Class="Saun_App.Views.BookingPage"
              Title="BookingPage"
              BackgroundColor="White">
@@ -14,8 +15,14 @@
 
             <Label Text="Maja broneerimine pilves" FontSize="22" FontAttributes="Bold" TextColor="Black"/>
 
+            <Label Text="Vali maja:" FontSize="14" />
+            <Picker Title="Vali sobiv saun..."
+                    ItemsSource="{Binding Houses}"
+                    ItemDisplayBinding="{Binding Name}"
+                    SelectedItem="{Binding SelectedHouse}" />
+
             <Label Text="Kliendi nimi:" FontSize="14" />
-            <Entry Text="{Binding CustomerName}" Placeholder="Sisesta oma nimi..." />
+            <Entry Text="{Binding CustomerName}" Placeholder="Sisesta oma nimi, et näha ka oma broneeringuid..." />
 
             <Label Text="Saabumine:" FontSize="14" />
             <DatePicker Date="{Binding StartDate}" />
@@ -32,6 +39,42 @@
                    FontSize="14" 
                    FontAttributes="Bold" 
                    HorizontalOptions="Center" />
+
+            <BoxView HeightRequest="1" Color="Gray" Margin="0,10,0,10" />
+
+            <Label Text="Minu aktiivsed broneeringud:" FontSize="18" FontAttributes="Bold" TextColor="Black" />
+
+            <CollectionView ItemsSource="{Binding MyReservations}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:Reservation">
+                        <Frame BorderColor="LightGray" CornerRadius="5" Margin="0,5" Padding="10">
+                            <Grid ColumnDefinitions="*, Auto">
+
+                                <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                    <Label Text="{Binding HouseId}" FontAttributes="Bold" FontSize="16" TextColor="Black"/>
+                                    <Label FontSize="12" TextColor="DimGray">
+                                        <Label.Text>
+                                            <MultiBinding StringFormat="{}{0:dd.MM.yyyy} kuni {1:dd.MM.yyyy}">
+                                                <Binding Path="StartDate" />
+                                                <Binding Path="EndDate" />
+                                            </MultiBinding>
+                                        </Label.Text>
+                                    </Label>
+                                </VerticalStackLayout>
+
+                                <Button Grid.Column="1" 
+                                        Text="Tühista" 
+                                        BackgroundColor="Red" 
+                                        TextColor="White"
+                                        FontSize="12"
+                                        HeightRequest="35"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:BookingViewModel}}, Path=CancelReservationCommand}"
+                                        CommandParameter="{Binding .}" />
+                            </Grid>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
 
         </VerticalStackLayout>
     </ScrollView>
